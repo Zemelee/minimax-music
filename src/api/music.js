@@ -1,17 +1,37 @@
 import axios from 'axios'
 
-const API_KEY = import.meta.env.VITE_MINIMAX_API_KEY || ''
-const BASE_URL = 'https://api.minimaxi.com/v1'
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8083'
 
-const apiClient = axios.create({
-  baseURL: BASE_URL,
-  headers: {
-    'Authorization': `Bearer ${API_KEY}`,
-    'Content-Type': 'application/json'
-  }
-})
+// 创建带 token 的 axios 实例
+function createApiClient() {
+  const token = localStorage.getItem('music_token')
+  const client = axios.create({
+    baseURL: API_BASE,
+    headers: {
+      'Authorization': token || '',
+      'Content-Type': 'application/json'
+    }
+  })
 
-// 音乐生成
+  // 响应拦截器：处理 401 自动登出
+  client.interceptors.response.use(
+    response => response,
+    error => {
+      if (error.response?.status === 401) {
+        // 清除本地登录状态
+        localStorage.removeItem('music_token')
+        localStorage.removeItem('music_user')
+        // 触发自定义事件，通知 AuthContext 登出
+        window.dispatchEvent(new CustomEvent('music-auth-expired'))
+      }
+      return Promise.reject(error)
+    }
+  )
+
+  return client
+}
+
+// 音乐生成（通过后端代理）
 export async function generateMusic({
   model = 'music-2.6', 
   prompt = '', 
@@ -22,12 +42,10 @@ export async function generateMusic({
   audioSetting = {},
   aigc_watermark = false
 }) {
-  if (!API_KEY) {
-    throw new Error('请配置 VITE_MINIMAX_API_KEY')
-  }
+  const apiClient = createApiClient()
   
   try {
-    const response = await apiClient.post('/music_generation', {
+    const response = await apiClient.post('/music/generate', {
       model,
       prompt,
       lyrics,
@@ -39,6 +57,9 @@ export async function generateMusic({
     })
     return response.data
   } catch (error) {
+    if (error.response?.data?.msg) {
+      throw new Error(error.response.data.msg)
+    }
     if (error.response?.data?.base_resp?.status_msg) {
       throw new Error(error.response.data.base_resp.status_msg)
     }
@@ -47,10 +68,11 @@ export async function generateMusic({
   }
 }
 
-// 获取任务状态
+// 获取任务状态（通过后端代理）
 export async function getTaskStatus(taskId) {
+  const apiClient = createApiClient()
   try {
-    const response = await apiClient.get(`/tasks/${taskId}`)
+    const response = await apiClient.get(`/music/tasks/${taskId}`)
     return response.data
   } catch (error) {
     console.error('获取任务状态失败:', error)

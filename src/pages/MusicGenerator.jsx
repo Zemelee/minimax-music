@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { generateMusic } from '../api/music'
+import { useGeneration } from '../context/GenerationContext'
 
 const SAMPLE_RATE_OPTIONS = [
   { value: 44100, label: '44100 Hz' },
@@ -128,6 +129,7 @@ const EXAMPLE_PROMPTS = [
 ]
 
 export default function MusicGenerator({ onMusicGenerated, prefillLyrics, onClearPrefillLyrics }) {
+  const { startGeneration, stopGeneration } = useGeneration()
   const [prompt, setPrompt] = useState('')
   const [lyrics, setLyrics] = useState('')
   const [isInstrumental, setIsInstrumental] = useState(false)
@@ -198,16 +200,14 @@ export default function MusicGenerator({ onMusicGenerated, prefillLyrics, onClea
     if (!validateForm()) return
     
     setIsGenerating(true)
+    startGeneration('music')
     setError(null)
     setGenerationStage(0)
     setValidationErrors({})
     
+    // 存储 interval 引用，确保能正确清理
     const stageInterval = setInterval(() => {
-      setGenerationStage(prev => {
-        if (prev < 2) return prev + 1
-        clearInterval(stageInterval)
-        return prev
-      })
+      setGenerationStage(prev => prev < 2 ? prev + 1 : prev)
     }, 2000)
 
     try {
@@ -226,9 +226,9 @@ export default function MusicGenerator({ onMusicGenerated, prefillLyrics, onClea
         aigc_watermark: addWatermark
       })
       clearInterval(stageInterval)
-      setGenerationStage(2)
       
       if (result.data?.status === 2 && result.data.audio) {
+        setGenerationStage(2)
         onMusicGenerated({
           url: result.data.audio,
           prompt: prompt.trim(),
@@ -243,11 +243,12 @@ export default function MusicGenerator({ onMusicGenerated, prefillLyrics, onClea
         throw new Error('生成失败，请重试')
       }
     } catch (err) {
+      clearInterval(stageInterval)
       setError(err.message || '歌曲生成失败，请重试')
       console.error(err)
     } finally {
       setIsGenerating(false)
-      clearInterval(stageInterval)
+      stopGeneration()
     }
   }
 

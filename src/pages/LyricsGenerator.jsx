@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react'
 import { generateLyrics } from '../api/lyrics'
+import { useGeneration } from '../context/GenerationContext'
 
 // 示例提示词
 const EXAMPLE_PROMPTS = [
@@ -29,6 +30,7 @@ const EXAMPLE_PROMPTS = [
 ]
 
 export default function LyricsGenerator({ onLyricsGenerated, onCreateMusicWithLyrics }) {
+  const { startGeneration, stopGeneration } = useGeneration()
   const [mode, setMode] = useState('write_full_song')
   const [prompt, setPrompt] = useState('')
   const [title, setTitle] = useState('')
@@ -74,6 +76,7 @@ export default function LyricsGenerator({ onLyricsGenerated, onCreateMusicWithLy
     if (!validateForm()) return
 
     setIsGenerating(true)
+    startGeneration('lyrics')
     setError(null)
     setGenerationStage(0)
     setValidationErrors({})
@@ -92,10 +95,10 @@ export default function LyricsGenerator({ onLyricsGenerated, onCreateMusicWithLy
         prompt: prompt.trim(),
         title: title.trim()
       })
-      clearInterval(stageInterval)
-      setGenerationStage(2)
 
       if (result.base_resp?.status_code === 0) {
+        setGenerationStage(2)
+        clearInterval(stageInterval)
         const lyricsData = {
           title: result.song_title,
           styleTags: result.style_tags,
@@ -111,11 +114,13 @@ export default function LyricsGenerator({ onLyricsGenerated, onCreateMusicWithLy
         throw new Error(result.base_resp?.status_msg || '生成失败')
       }
     } catch (err) {
+      clearInterval(stageInterval)
+      setGenerationStage(0)
       setError(err.message || '歌词生成失败，请重试')
       console.error(err)
     } finally {
       setIsGenerating(false)
-      clearInterval(stageInterval)
+      stopGeneration()
     }
   }
 

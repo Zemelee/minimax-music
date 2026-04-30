@@ -1,17 +1,35 @@
 import axios from 'axios'
 
-const API_KEY = import.meta.env.VITE_MINIMAX_API_KEY || ''
-const BASE_URL = 'https://api.minimaxi.com/v1'
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8083'
 
-const apiClient = axios.create({
-  baseURL: BASE_URL,
-  headers: {
-    'Authorization': `Bearer ${API_KEY}`,
-    'Content-Type': 'application/json'
-  }
-})
+// 创建带 token 的 axios 实例
+function createApiClient() {
+  const token = localStorage.getItem('music_token')
+  const client = axios.create({
+    baseURL: API_BASE,
+    headers: {
+      'Authorization': token || '',
+      'Content-Type': 'application/json'
+    }
+  })
 
-// 歌词生成
+  // 响应拦截器：处理 401 自动登出
+  client.interceptors.response.use(
+    response => response,
+    error => {
+      if (error.response?.status === 401) {
+        localStorage.removeItem('music_token')
+        localStorage.removeItem('music_user')
+        window.dispatchEvent(new CustomEvent('music-auth-expired'))
+      }
+      return Promise.reject(error)
+    }
+  )
+
+  return client
+}
+
+// 歌词生成（通过后端代理）
 // mode: write_full_song (写完整歌曲) | edit (编辑/续写歌词)
 export async function generateLyrics({ 
   mode = 'write_full_song', 
@@ -19,24 +37,27 @@ export async function generateLyrics({
   lyrics = '', 
   title = '' 
 }) {
-  if (!API_KEY) {
-    throw new Error('请先在 .env 文件中配置 VITE_MINIMAX_API_KEY')
-  }
+  const apiClient = createApiClient()
   
   try {
-    const response = await apiClient.post('/lyrics_generation', {
+    const response = await apiClient.post('/music/lyrics', {
       mode,
       prompt,
       lyrics,
       title
     })
     
-    if (response.data.base_resp?.status_code !== 0) {
-      throw new Error(response.data.base_resp?.status_msg || '歌词生成失败')
+    const data = response.data
+    // 后端直接返回 MiniMax 的响应，检查 status_code
+    if (data.base_resp?.status_code !== 0) {
+      throw new Error(data.base_resp?.status_msg || '歌词生成失败')
     }
     
-    return response.data
+    return data
   } catch (error) {
+    if (error.response?.data?.msg) {
+      throw new Error(error.response.data.msg)
+    }
     if (error.response?.data?.base_resp?.status_msg) {
       throw new Error(error.response.data.base_resp.status_msg)
     }
@@ -45,10 +66,11 @@ export async function generateLyrics({
   }
 }
 
-// 获取歌词任务状态
+// 获取歌词任务状态（通过后端代理）
 export async function getLyricsTaskStatus(taskId) {
+  const apiClient = createApiClient()
   try {
-    const response = await apiClient.get(`/lyrics/tasks/${taskId}`)
+    const response = await apiClient.get(`/music/lyrics/tasks/${taskId}`)
     return response.data
   } catch (error) {
     console.error('获取歌词任务状态失败:', error)

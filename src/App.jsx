@@ -1,57 +1,159 @@
 import { useState, useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom'
+import { AuthProvider, useAuth } from './context/AuthContext'
+import { GenerationProvider, useGeneration } from './context/GenerationContext'
 import LyricsGenerator from './pages/LyricsGenerator'
 import MusicGenerator from './pages/MusicGenerator'
 import Works from './pages/Works'
+import Login from './pages/Login'
+import Help from './pages/Help'
 
 const STORAGE_KEY = 'ai_music_studio_works'
 
 function Navigation({ works }) {
   const location = useLocation()
+  const { user, logout } = useAuth()
+  const { isGenerating, generationType } = useGeneration()
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
   
   const isActive = (path) => location.pathname === path
+
+  const handleLogout = () => {
+    if (isGenerating) return
+    setShowLogoutConfirm(true)
+  }
+
+  const confirmLogout = () => {
+    setShowLogoutConfirm(false)
+    logout()
+  }
+
+  // 生成中点击导航时的提示
+  const handleNavClick = (e, path) => {
+    if (isGenerating && location.pathname !== path) {
+      e.preventDefault()
+    }
+  }
   
   return (
-    <header className="header">
-      <div className="logo">
-        <div className="logo-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M9 18V5l12-2v13"/>
-            <circle cx="6" cy="18" r="3"/>
-            <circle cx="18" cy="16" r="3"/>
-          </svg>
+    <>
+      <header className="header">
+        <div className="logo">
+          <div className="logo-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M9 18V5l12-2v13"/>
+              <circle cx="6" cy="18" r="3"/>
+              <circle cx="18" cy="16" r="3"/>
+            </svg>
+          </div>
+          <div className="logo-text">
+            <h1>AI 音乐工坊</h1>
+            <p>MiniMax Music Studio</p>
+          </div>
         </div>
-        <div className="logo-text">
-          <h1>AI 音乐工坊</h1>
-          <p>MiniMax Music Studio</p>
-        </div>
-      </div>
-      
-      <nav className="nav">
-        <Link to="/lyrics" className={`nav-link ${isActive('/lyrics') ? 'active' : ''}`}>
-          歌词创作
-        </Link>
-        <Link to="/music" className={`nav-link ${isActive('/music') ? 'active' : ''}`}>
-          歌曲创作
-        </Link>
-        <Link to="/works" className={`nav-link ${isActive('/works') ? 'active' : ''}`}>
-          我的作品
-        </Link>
-      </nav>
+        
+        <nav className="nav">
+          <Link 
+            to="/lyrics" 
+            className={`nav-link ${isActive('/lyrics') ? 'active' : ''} ${isGenerating && !isActive('/lyrics') ? 'nav-disabled' : ''}`}
+            onClick={(e) => handleNavClick(e, '/lyrics')}
+          >
+            歌词创作
+          </Link>
+          <Link 
+            to="/music" 
+            className={`nav-link ${isActive('/music') ? 'active' : ''} ${isGenerating && !isActive('/music') ? 'nav-disabled' : ''}`}
+            onClick={(e) => handleNavClick(e, '/music')}
+          >
+            歌曲创作
+          </Link>
+          <Link 
+            to="/works" 
+            className={`nav-link ${isActive('/works') ? 'active' : ''} ${isGenerating && !isActive('/works') ? 'nav-disabled' : ''}`}
+            onClick={(e) => handleNavClick(e, '/works')}
+          >
+            我的作品
+          </Link>
+          <Link 
+            to="/help" 
+            className={`nav-link ${isActive('/help') ? 'active' : ''}`}
+            onClick={(e) => handleNavClick(e, '/help')}
+          >
+            使用说明
+          </Link>
+        </nav>
 
-      <div className="header-actions">
-        <div className="works-count">
-          <span className="count-badge">{works.lyrics.length}</span>
-          <span className="count-label">歌词</span>
-          <span className="count-badge">{works.music.length}</span>
-          <span className="count-label">歌曲</span>
+        <div className="header-actions">
+          <div className="works-count">
+            <span className="count-badge">{works.lyrics.length}</span>
+            <span className="count-label">歌词</span>
+            <span className="count-badge">{works.music.length}</span>
+            <span className="count-label">歌曲</span>
+          </div>
+          {user && (
+            <div className="user-info">
+              <span className="user-balance" title="当前余额">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14">
+                  <circle cx="12" cy="12" r="10"/>
+                  <path d="M12 6v12M6 12h12"/>
+                </svg>
+                {user.balance}
+              </span>
+              <span className="user-account">{user.account}</span>
+              <button 
+                className={`logout-btn ${isGenerating ? 'logout-disabled' : ''}`} 
+                onClick={handleLogout} 
+                title={isGenerating ? '生成中无法退出' : '退出登录'}
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                  <polyline points="16 17 21 12 16 7"/>
+                  <line x1="21" y1="12" x2="9" y2="12"/>
+                </svg>
+              </button>
+            </div>
+          )}
         </div>
-      </div>
-    </header>
+      </header>
+
+      {/* 生成中的提示横幅 */}
+      {isGenerating && (
+        <div className="generation-banner">
+          <div className="generation-banner-content">
+            <div className="generation-spinner"></div>
+            <span>
+              {generationType === 'music' ? '🎵 歌曲生成中，请勿切换页面...' : '🎤 歌词生成中，请勿切换页面...'}
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* 退出确认弹窗 */}
+      {showLogoutConfirm && (
+        <div className="modal-overlay" onClick={() => setShowLogoutConfirm(false)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                <polyline points="16 17 21 12 16 7"/>
+                <line x1="21" y1="12" x2="9" y2="12"/>
+              </svg>
+            </div>
+            <h3>确认退出</h3>
+            <p>退出后需要重新登录才能继续创作</p>
+            <div className="modal-actions">
+              <button className="modal-cancel" onClick={() => setShowLogoutConfirm(false)}>取消</button>
+              <button className="modal-confirm" onClick={confirmLogout}>确认退出</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   )
 }
 
 function AppContent() {
+  const { user, loading, refreshBalance } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
   const [works, setWorks] = useState(() => {
@@ -63,6 +165,25 @@ function AppContent() {
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(works))
   }, [works])
+
+  // 未登录时显示登录页面
+  if (loading) {
+    return (
+      <div className="app">
+        <div className="bg-animation">
+          <div className="bg-orb bg-orb-1"></div>
+          <div className="bg-orb bg-orb-2"></div>
+          <div className="bg-orb bg-orb-3"></div>
+          <div className="grid-bg"></div>
+        </div>
+        <div className="loading-screen">加载中...</div>
+      </div>
+    )
+  }
+
+  if (!user) {
+    return <Login />
+  }
 
   // 处理从歌词生成页面跳转创作歌曲
   const handleCreateMusicWithLyrics = (lyricsData) => {
@@ -84,6 +205,8 @@ function AppContent() {
       ...prev,
       music: [newWork, ...prev.music].slice(0, 50)
     }))
+    // 生成成功后刷新余额
+    refreshBalance()
   }
 
   const handleLyricsGenerated = (lyricsData) => {
@@ -96,6 +219,8 @@ function AppContent() {
       ...prev,
       lyrics: [newWork, ...prev.lyrics].slice(0, 50)
     }))
+    // 生成成功后刷新余额
+    refreshBalance()
     // 跳转到作品页面并展开新歌词
     navigate('/works', { state: { expandLyrics: newId } })
   }
@@ -107,7 +232,7 @@ function AppContent() {
     }))
   }
 
-  const showFeatures = location.pathname !== '/works'
+  const showFeatures = location.pathname === '/help'
 
   return (
     <div className="app">
@@ -150,6 +275,7 @@ function AppContent() {
           <Route path="/works" element={
             <Works works={works} onDelete={deleteWork} />
           } />
+          <Route path="/help" element={<Help />} />
           <Route path="/" element={
             <section className="panel-section">
               <div className="panel-header">
@@ -227,7 +353,11 @@ function AppContent() {
 function App() {
   return (
     <BrowserRouter>
-      <AppContent />
+      <AuthProvider>
+        <GenerationProvider>
+          <AppContent />
+        </GenerationProvider>
+      </AuthProvider>
     </BrowserRouter>
   )
 }

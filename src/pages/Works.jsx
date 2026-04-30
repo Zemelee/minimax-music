@@ -7,6 +7,7 @@ export default function Works({ works, onDelete }) {
   const [playingMusicId, setPlayingMusicId] = useState(null)
   const [playingStates, setPlayingStates] = useState({})
   const [copyFeedback, setCopyFeedback] = useState(null)
+  const [deleteTarget, setDeleteTarget] = useState(null) // { type, id, name }
   const location = useLocation()
 
   // 处理从歌词生成页面的跳转，自动展开新生成的歌词
@@ -44,6 +45,17 @@ export default function Works({ works, onDelete }) {
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
+    }
+  }
+
+  const handleDeleteClick = (type, id, name) => {
+    setDeleteTarget({ type, id, name })
+  }
+
+  const confirmDelete = () => {
+    if (deleteTarget) {
+      onDelete(deleteTarget.type, deleteTarget.id)
+      setDeleteTarget(null)
     }
   }
 
@@ -104,11 +116,7 @@ export default function Works({ works, onDelete }) {
                         </button>
                         <button 
                           className="delete-btn"
-                          onClick={() => {
-                            if (window.confirm('确定要删除这首歌词吗？')) {
-                              onDelete('lyrics', work.id)
-                            }
-                          }}
+                          onClick={() => handleDeleteClick('lyrics', work.id, work.title || '歌词作品')}
                           title="删除"
                         >
                           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -188,11 +196,7 @@ export default function Works({ works, onDelete }) {
                         )}
                         <button 
                           className="delete-btn"
-                          onClick={() => {
-                            if (window.confirm('确定要删除这首歌曲吗？')) {
-                              onDelete('music', work.id)
-                            }
-                          }}
+                          onClick={() => handleDeleteClick('music', work.id, work.prompt?.slice(0, 20) || '歌曲作品')}
                           title="删除"
                         >
                           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -236,6 +240,28 @@ export default function Works({ works, onDelete }) {
                   </div>
                 ))
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 删除确认弹窗 */}
+      {deleteTarget && (
+        <div className="modal-overlay" onClick={() => setDeleteTarget(null)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="3 6 5 6 21 6"/>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                <line x1="10" y1="11" x2="10" y2="17"/>
+                <line x1="14" y1="11" x2="14" y2="17"/>
+              </svg>
+            </div>
+            <h3>确认删除</h3>
+            <p>确定要删除「{deleteTarget.name}」吗？此操作不可撤销。</p>
+            <div className="modal-actions">
+              <button className="modal-cancel" onClick={() => setDeleteTarget(null)}>取消</button>
+              <button className="modal-confirm" onClick={confirmDelete}>确认删除</button>
             </div>
           </div>
         </div>
