@@ -52,6 +52,30 @@ export default function Works({ works, onDelete }) {
     setDeleteTarget({ type, id, name })
   }
 
+  // 复制文本到剪贴板（兼容非HTTPS环境）
+  const copyToClipboard = async (text) => {
+    try {
+      // 优先使用 modern API
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(text)
+        return true
+      }
+      // fallback: 使用传统方法
+      const textarea = document.createElement('textarea')
+      textarea.value = text
+      textarea.style.position = 'fixed'
+      textarea.style.opacity = '0'
+      document.body.appendChild(textarea)
+      textarea.select()
+      const success = document.execCommand('copy')
+      document.body.removeChild(textarea)
+      return success
+    } catch (err) {
+      console.error('复制失败:', err)
+      return false
+    }
+  }
+
   const confirmDelete = () => {
     if (deleteTarget) {
       onDelete(deleteTarget.type, deleteTarget.id)
@@ -95,11 +119,12 @@ export default function Works({ works, onDelete }) {
                       <div className="work-actions">
                         <button 
                           className="copy-btn"
-                          onClick={() => {
-                            navigator.clipboard.writeText(work.lyrics).then(() => {
+                          onClick={async () => {
+                            const success = await copyToClipboard(work.lyrics)
+                            if (success) {
                               setCopyFeedback(work.id)
                               setTimeout(() => setCopyFeedback(null), 2000)
-                            })
+                            }
                           }}
                           title="复制歌词"
                         >
