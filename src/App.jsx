@@ -11,10 +11,11 @@ import Help from './pages/Help'
 const STORAGE_KEY = 'ai_music_studio_works'
 
 function Navigation({ works }) {
-  const location = useLocation()
-  const { user, logout } = useAuth()
+  const location = useLocation() // 导航信息
+  const { user, logout, balance } = useAuth()
   const { isGenerating, generationType } = useGeneration()
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
+
   
   const isActive = (path) => location.pathname === path
 
@@ -97,7 +98,7 @@ function Navigation({ works }) {
                   <circle cx="12" cy="12" r="10"/>
                   <path d="M12 6v12M6 12h12"/>
                 </svg>
-                {user.balance}
+                {balance !== null ? balance : '-'}
               </span>
               <span className="user-account">{user.account}</span>
               <button 
@@ -154,8 +155,8 @@ function Navigation({ works }) {
 
 function AppContent() {
   const { user, loading, refreshBalance } = useAuth()
-  const location = useLocation()
-  const navigate = useNavigate()
+  const location = useLocation() // route
+  const navigate = useNavigate() // router
   const [works, setWorks] = useState(() => {
     const saved = localStorage.getItem(STORAGE_KEY)
     return saved ? JSON.parse(saved) : { music: [], lyrics: [] }
@@ -205,7 +206,7 @@ function AppContent() {
       ...prev,
       music: [newWork, ...prev.music].slice(0, 50)
     }))
-    // 生成成功后刷新余额
+    // 生成成功后刷新余额（通过 balanceVersion 触发）
     refreshBalance()
   }
 
@@ -247,6 +248,7 @@ function AppContent() {
 
       <main className="main-content">
         <Routes>
+
           <Route path="/lyrics" element={
             <section className="panel-section">
               <div className="panel-header">
@@ -259,6 +261,8 @@ function AppContent() {
               />
             </section>
           } />
+
+
           <Route path="/music" element={
             <section className="panel-section">
               <div className="panel-header">
@@ -272,10 +276,15 @@ function AppContent() {
               />
             </section>
           } />
+
+
           <Route path="/works" element={
             <Works works={works} onDelete={deleteWork} />
           } />
+
+
           <Route path="/help" element={<Help />} />
+          
           <Route path="/" element={
             <section className="panel-section">
               <div className="panel-header">

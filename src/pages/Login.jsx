@@ -43,7 +43,7 @@ export default function Login() {
             </svg>
           </div>
           <h1>AI 音乐工坊</h1>
-          <p>使用您的账号登录以开始创作</p>
+          <p>使用您的 <a href="http://sugarblack.top" target='_blank'>Q11E账号</a> 登录以开始创作</p>
         </div>
 
         <form onSubmit={handleSubmit} className="login-form">
@@ -86,7 +86,10 @@ export default function Login() {
         </form>
 
         <div className="login-footer">
-          <p>使用 Q11E 账号登录，每次生成消耗 7 额度</p>
+          <p>使用 <a href="http://sugarblack.top" target='_blank'>Q11E账号</a> 登录</p>
+        </div>
+        <div className="login-footer" style={{ marginTop: '8px' }}>
+          <p>若需注册、充值额度，请前往 <a href="http://sugarblack.top" target='_blank'>http://sugarblack.top</a></p>
         </div>
       </div>
     </div>

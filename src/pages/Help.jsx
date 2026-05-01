@@ -14,7 +14,7 @@ export default function Help() {
         <h1>AI 音乐工坊</h1>
         <p className="help-subtitle">MiniMax Music Studio</p>
         <p className="help-desc">
-          这是 <a href="http://q11e.cn" target="_blank" rel="noopener noreferrer">q11e.cn</a> 的娱乐性AI音乐创作平台
+          这是 <a href="http://sugarblack.top" target="_blank" rel="noopener noreferrer">sugarblack.top</a> 的娱乐性AI音乐创作平台
         </p>
       </div>
 
@@ -32,7 +32,7 @@ export default function Help() {
             </div>
             <div className="info-content">
               <p><strong>每次生成消耗 7 额度</strong></p>
-              <p>无论是歌词创作还是歌曲创作，每次都会扣除 7 额度</p>
+              <p>无论是歌词创作还是歌曲创作，生成扣除 7 额度；额度不足请在 http://sugarblack.top/order 充值</p>
             </div>
           </div>
           <div className="info-box">
@@ -46,7 +46,7 @@ export default function Help() {
             </div>
             <div className="info-content">
               <p><strong>每日免费领取 7 额度</strong></p>
-              <p>每天可以在 <a href="http://q11e.cn" target="_blank" rel="noopener noreferrer">q11e.cn</a> 领取额度</p>
+              <p>每天可以在 <a href="http://sugarblack.top" target="_blank" rel="noopener noreferrer">sugarblack.top</a> 领取额度</p>
             </div>
           </div>
         </div>
@@ -129,7 +129,7 @@ export default function Help() {
               <div className="step-number">2</div>
               <div className="step-content">
                 <h4>领取额度</h4>
-                <p>每天在 q11e.cn 领取 7 额度</p>
+                <p>每天在 sugarblack.top 领取 7 额度</p>
               </div>
             </div>
             <div className="step">
@@ -159,13 +159,13 @@ export default function Help() {
         <div className="help-section">
           <h3>相关链接</h3>
           <div className="links-grid">
-            <a href="http://q11e.cn" target="_blank" rel="noopener noreferrer" className="link-card">
+            <a href="http://sugarblack.top" target="_blank" rel="noopener noreferrer" className="link-card">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
                 <polyline points="15 3 21 3 21 9"/>
                 <line x1="10" y1="14" x2="21" y2="3"/>
               </svg>
-              <span>q11e.cn 主页</span>
+              <span>sugarblack.top 主页</span>
             </a>
             <Link to="/lyrics" className="link-card">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -181,19 +181,8 @@ export default function Help() {
               </svg>
               <span>开始创作歌曲</span>
             </Link>
-            <Link to="/works" className="link-card">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
-              </svg>
-              <span>查看我的作品</span>
-            </Link>
           </div>
         </div>
-      </div>
-
-      <div className="help-card disclaimer">
-        <h3>⚠️ 免责声明</h3>
-        <p>本平台仅供娱乐使用。生成的音乐内容版权归生成者所有。AI 生成的内容可能存在不确定性，请谨慎使用。</p>
       </div>
     </div>
   )

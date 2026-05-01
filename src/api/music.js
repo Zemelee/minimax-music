@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8083'
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://sugarblack.top:8083'
 
 // 创建带 token 的 axios 实例
 function createApiClient() {
