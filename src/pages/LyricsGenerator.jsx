@@ -36,11 +36,9 @@ export default function LyricsGenerator({ onLyricsGenerated, onCreateMusicWithLy
   const [title, setTitle] = useState('')
   const [isGenerating, setIsGenerating] = useState(false)
   const [error, setError] = useState(null)
-  const [generationStage, setGenerationStage] = useState(0)
   const [validationErrors, setValidationErrors] = useState({})
   const [generatedLyrics, setGeneratedLyrics] = useState(null)
 
-  const stageText = ['正在发送请求...', 'AI 正在创作歌词...', '歌词生成完成!']
 
   // 记录上一次填充的示例索引，避免连续重复
   const lastExampleIndex = useRef(-1)
@@ -78,16 +76,7 @@ export default function LyricsGenerator({ onLyricsGenerated, onCreateMusicWithLy
     setIsGenerating(true)
     startGeneration('lyrics')
     setError(null)
-    setGenerationStage(0)
     setValidationErrors({})
-
-    const stageInterval = setInterval(() => {
-      setGenerationStage(prev => {
-        if (prev < 2) return prev + 1
-        clearInterval(stageInterval)
-        return prev
-      })
-    }, 2000)
 
     try {
       const result = await generateLyrics({
@@ -97,8 +86,6 @@ export default function LyricsGenerator({ onLyricsGenerated, onCreateMusicWithLy
       })
 
       if (result.base_resp?.status_code === 0) {
-        setGenerationStage(2)
-        clearInterval(stageInterval)
         const lyricsData = {
           title: result.song_title,
           styleTags: result.style_tags,
@@ -114,8 +101,6 @@ export default function LyricsGenerator({ onLyricsGenerated, onCreateMusicWithLy
         throw new Error(result.base_resp?.status_msg || '生成失败')
       }
     } catch (err) {
-      clearInterval(stageInterval)
-      setGenerationStage(0)
       setError(err.message || '歌词生成失败，请重试')
       console.error(err)
     } finally {
@@ -221,7 +206,6 @@ export default function LyricsGenerator({ onLyricsGenerated, onCreateMusicWithLy
           <div className="typing-animation">
             <span></span><span></span><span></span>
           </div>
-          <span className="stage-text">{stageText[generationStage]}</span>
         </div>
       )}
 

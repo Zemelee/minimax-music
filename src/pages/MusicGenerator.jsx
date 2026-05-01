@@ -115,6 +115,12 @@ const EXAMPLE_PROMPTS = [
     lyricsOptimizer: true,
   },
   {
+    prompt: '希望，绝境重生，英雄主题曲，热血风格',
+    lyrics: '',
+    isInstrumental: false,
+    lyricsOptimizer: true,
+  },
+  {
     prompt: '古典钢琴,忧伤钢琴曲,深夜独处,回忆往事,眼泪,静谧美',
     lyrics: '',
     isInstrumental: true,
@@ -132,15 +138,14 @@ export default function MusicGenerator({ onMusicGenerated, prefillLyrics, onClea
   const { startGeneration, stopGeneration } = useGeneration()
   const [prompt, setPrompt] = useState('')
   const [lyrics, setLyrics] = useState('')
-  const [isInstrumental, setIsInstrumental] = useState(false)
-  const [lyricsOptimizer, setLyricsOptimizer] = useState(false)
+  const [isInstrumental, setIsInstrumental] = useState(false) // 纯音乐
+  const [lyricsOptimizer, setLyricsOptimizer] = useState(false) // 生成歌词
   const [sampleRate, setSampleRate] = useState(44100)
   const [bitrate, setBitrate] = useState(256000)
-  const [addWatermark, setAddWatermark] = useState(false)
+
   
   const [isGenerating, setIsGenerating] = useState(false)
   const [error, setError] = useState(null)
-  const [generationStage, setGenerationStage] = useState(0)
   const [validationErrors, setValidationErrors] = useState({})
 
   // 处理预填充的歌词（从歌词生成页面跳转过来）
@@ -158,7 +163,6 @@ export default function MusicGenerator({ onMusicGenerated, prefillLyrics, onClea
     }
   }, [prefillLyrics])
 
-  const stageText = ['正在发送请求...', 'AI 正在创作中，请耐心等待...', '歌曲生成完成!']
 
   // 记录上一次填充的示例索引，避免连续重复
   const lastExampleIndex = useRef(-1)
@@ -202,14 +206,9 @@ export default function MusicGenerator({ onMusicGenerated, prefillLyrics, onClea
     setIsGenerating(true)
     startGeneration('music')
     setError(null)
-    setGenerationStage(0)
     setValidationErrors({})
     
     // 存储 interval 引用，确保能正确清理
-    const stageInterval = setInterval(() => {
-      setGenerationStage(prev => prev < 2 ? prev + 1 : prev)
-    }, 2000)
-
     try {
       const result = await generateMusic({
         model: 'music-2.6',
@@ -223,12 +222,10 @@ export default function MusicGenerator({ onMusicGenerated, prefillLyrics, onClea
           bitrate,
           format: 'mp3'
         },
-        aigc_watermark: addWatermark
+        aigc_watermark: false
       })
-      clearInterval(stageInterval)
       
       if (result.data?.status === 2 && result.data.audio) {
-        setGenerationStage(2)
         onMusicGenerated({
           url: result.data.audio,
           prompt: prompt.trim(),
@@ -243,7 +240,6 @@ export default function MusicGenerator({ onMusicGenerated, prefillLyrics, onClea
         throw new Error('生成失败，请重试')
       }
     } catch (err) {
-      clearInterval(stageInterval)
       setError(err.message || '歌曲生成失败，请重试')
       console.error(err)
     } finally {
@@ -327,40 +323,33 @@ export default function MusicGenerator({ onMusicGenerated, prefillLyrics, onClea
         <div className="option-item">
           <label className="checkbox-label">
             <input 
-              type="checkbox" 
+              type="radio" 
+              name="music-type"
               checked={isInstrumental}
-              onChange={(e) => {
-                setIsInstrumental(e.target.checked)
+              onChange={() => {
+                setIsInstrumental(true)
+                setLyricsOptimizer(false)
                 setValidationErrors(prev => ({ ...prev, lyrics: '' }))
               }}
               disabled={isGenerating}
             />
-            <span>生成纯音乐（无人声）</span>
+            <span>纯音乐（无人声）</span>
           </label>
         </div>
         <div className="option-item">
           <label className="checkbox-label">
             <input 
-              type="checkbox" 
+              type="radio" 
+              name="music-type"
               checked={lyricsOptimizer}
-              onChange={(e) => {
-                setLyricsOptimizer(e.target.checked)
+              onChange={() => {
+                setLyricsOptimizer(true)
+                setIsInstrumental(false)
                 setValidationErrors(prev => ({ ...prev, lyrics: '' }))
               }}
               disabled={isGenerating}
             />
             <span>自动生成歌词</span>
-          </label>
-        </div>
-        <div className="option-item">
-          <label className="checkbox-label">
-            <input 
-              type="checkbox" 
-              checked={addWatermark}
-              onChange={(e) => setAddWatermark(e.target.checked)}
-              disabled={isGenerating}
-            />
-            <span>添加水印</span>
           </label>
         </div>
       </div>
@@ -408,7 +397,6 @@ export default function MusicGenerator({ onMusicGenerated, prefillLyrics, onClea
           <div className="music-bars">
             <span></span><span></span><span></span><span></span><span></span>
           </div>
-          <span className="stage-text">{stageText[generationStage]}</span>
         </div>
       )}
 
@@ -427,7 +415,7 @@ export default function MusicGenerator({ onMusicGenerated, prefillLyrics, onClea
         disabled={isGenerating || !isFormValid()}
       >
         <span className="btn-text">
-          {isGenerating ? '创作中，请耐心等待...' : '生成歌曲'}
+          {isGenerating ? '创作可能需要几分钟，请耐心等待...' : '生成歌曲'}
         </span>
         <span className="btn-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

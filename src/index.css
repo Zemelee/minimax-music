@@ -934,6 +934,16 @@ body {
   padding: 2rem 0;
 }
 
+.works-notice {
+  font-size: 0.85rem;
+  color: #ff9800;
+  background: rgba(255, 152, 0, 0.1);
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  border: 1px solid rgba(255, 152, 0, 0.3);
+}
+
 .works-container {
   display: grid;
   grid-template-columns: 1fr 1fr;

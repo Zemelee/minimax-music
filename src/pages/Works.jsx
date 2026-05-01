@@ -169,6 +169,7 @@ export default function Works({ works, onDelete }) {
               歌曲作品
               <span className="column-count">{works.music.length}</span>
             </h3>
+            <p className="works-notice">⚠️ 歌曲作品仅能保存24小时，请及时下载</p>
             <div className="works-list">
               {works.music.length === 0 ? (
                 <div className="empty-column">暂无歌曲作品</div>
