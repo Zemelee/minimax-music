@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { BrowserRouter, Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom'
+import { Routes, Route, Link, useLocation, useNavigate, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { GenerationProvider, useGeneration } from './context/GenerationContext'
 import LyricsGenerator from './pages/LyricsGenerator'
@@ -7,11 +7,12 @@ import MusicGenerator from './pages/MusicGenerator'
 import Works from './pages/Works'
 import Login from './pages/Login'
 import Help from './pages/Help'
+import NotFound from './pages/NotFound'
 
 const STORAGE_KEY = 'ai_music_studio_works'
 
 function Navigation({ works }) {
-  const location = useLocation() // 导航信息
+  const location = useLocation()
   const { user, logout, balance } = useAuth()
   const { isGenerating, generationType } = useGeneration()
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
@@ -29,7 +30,6 @@ function Navigation({ works }) {
     logout()
   }
 
-  // 生成中点击导航时的提示
   const handleNavClick = (e, path) => {
     if (isGenerating && location.pathname !== path) {
       e.preventDefault()
@@ -117,7 +117,6 @@ function Navigation({ works }) {
         </div>
       </header>
 
-      {/* 生成中的提示横幅 */}
       {isGenerating && (
         <div className="generation-banner">
           <div className="generation-banner-content">
@@ -129,7 +128,6 @@ function Navigation({ works }) {
         </div>
       )}
 
-      {/* 退出确认弹窗 */}
       {showLogoutConfirm && (
         <div className="modal-overlay" onClick={() => setShowLogoutConfirm(false)}>
           <div className="modal-card" onClick={(e) => e.stopPropagation()}>
@@ -155,8 +153,8 @@ function Navigation({ works }) {
 
 function AppContent() {
   const { user, loading, refreshBalance } = useAuth()
-  const location = useLocation() // route
-  const navigate = useNavigate() // router
+  const location = useLocation()
+  const navigate = useNavigate()
   const [works, setWorks] = useState(() => {
     const saved = localStorage.getItem(STORAGE_KEY)
     return saved ? JSON.parse(saved) : { music: [], lyrics: [] }
@@ -167,7 +165,6 @@ function AppContent() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(works))
   }, [works])
 
-  // 未登录时显示登录页面
   if (loading) {
     return (
       <div className="app">
@@ -186,13 +183,11 @@ function AppContent() {
     return <Login />
   }
 
-  // 处理从歌词生成页面跳转创作歌曲
   const handleCreateMusicWithLyrics = (lyricsData) => {
     setPrefillLyrics(lyricsData)
     navigate('/music')
   }
 
-  // 清除预填充歌词
   const clearPrefillLyrics = () => {
     setPrefillLyrics(null)
   }
@@ -206,7 +201,6 @@ function AppContent() {
       ...prev,
       music: [newWork, ...prev.music].slice(0, 50)
     }))
-    // 生成成功后刷新余额（通过 balanceVersion 触发）
     refreshBalance()
   }
 
@@ -220,9 +214,7 @@ function AppContent() {
       ...prev,
       lyrics: [newWork, ...prev.lyrics].slice(0, 50)
     }))
-    // 生成成功后刷新余额
     refreshBalance()
-    // 跳转到作品页面并展开新歌词
     navigate('/works', { state: { expandLyrics: newId } })
   }
 
@@ -234,6 +226,12 @@ function AppContent() {
   }
 
   const showFeatures = location.pathname === '/help'
+  const is404 = !['/', '/lyrics', '/music', '/works', '/help'].includes(location.pathname)
+
+  // 如果是未定义的路由，显示 404
+  if (is404) {
+    return <NotFound />
+  }
 
   return (
     <div className="app">
@@ -248,6 +246,18 @@ function AppContent() {
 
       <main className="main-content">
         <Routes>
+          <Route path="/" element={
+            <section className="panel-section">
+              <div className="panel-header">
+                <h2>🎤 AI 歌词生成</h2>
+                <p>输入主题或情感，让 AI 为你创作动人的歌词</p>
+              </div>
+              <LyricsGenerator 
+                onLyricsGenerated={handleLyricsGenerated}
+                onCreateMusicWithLyrics={handleCreateMusicWithLyrics}
+              />
+            </section>
+          } />
 
           <Route path="/lyrics" element={
             <section className="panel-section">
@@ -261,7 +271,6 @@ function AppContent() {
               />
             </section>
           } />
-
 
           <Route path="/music" element={
             <section className="panel-section">
@@ -277,26 +286,11 @@ function AppContent() {
             </section>
           } />
 
-
           <Route path="/works" element={
             <Works works={works} onDelete={deleteWork} />
           } />
 
-
           <Route path="/help" element={<Help />} />
-          
-          <Route path="/" element={
-            <section className="panel-section">
-              <div className="panel-header">
-                <h2>🎤 AI 歌词生成</h2>
-                <p>输入主题或情感，让 AI 为你创作动人的歌词</p>
-              </div>
-              <LyricsGenerator 
-                onLyricsGenerated={handleLyricsGenerated}
-                onCreateMusicWithLyrics={handleCreateMusicWithLyrics}
-              />
-            </section>
-          } />
         </Routes>
 
         {showFeatures && (
@@ -359,16 +353,6 @@ function AppContent() {
   )
 }
 
-function App() {
-  return (
-    <BrowserRouter>
-      <AuthProvider>
-        <GenerationProvider>
-          <AppContent />
-        </GenerationProvider>
-      </AuthProvider>
-    </BrowserRouter>
-  )
+export default function App() {
+  return <AppContent />
 }
-
-export default App
